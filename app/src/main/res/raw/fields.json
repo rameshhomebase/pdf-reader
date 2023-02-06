@@ -1,0 +1,70 @@
+{
+  "pages": [
+    {
+      "page": 1,
+      "fields": [
+        {
+          "value": "27/02/2022",
+          "type": "date",
+          "position": [
+            105,
+            388
+          ]
+        },
+        {
+          "value": "John Doe",
+          "type": "name",
+          "position": [
+            152,
+            412
+          ]
+        },
+        {
+          "value": "(__**KK***__)",
+          "type": "sign",
+          "position": [
+            188,
+            343
+          ]
+        }
+      ]
+    },
+    {
+      "page": 2,
+      "fields": [
+        {
+          "value": "27/01/2023",
+          "type": "date",
+          "position": [
+            102,
+            126
+          ]
+        },
+        {
+          "value": "_--^^--_",
+          "type": "sign",
+          "position": [
+            187,
+            146
+          ]
+        },
+        {
+          "value": "John Doe",
+          "type": "name",
+          "position": [
+            202,
+            168
+          ]
+        }
+      ]
+    },
+    {
+      "page": 3,
+      "fields": []
+    },
+    {
+      "page": 4,
+      "fields": []
+    }
+  ]
+}
