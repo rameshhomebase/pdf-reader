@@ -130,9 +130,9 @@ fun CustomFormsComponent(
     }
     Box(
         modifier = Modifier
-//            .wrapContentSize()
+            .wrapContentSize()
 // //            .verticalScroll(scrollState)
-//            .fillMaxSize(1f)
+            .fillMaxSize(1f)
 //            .background(color = Color.Blue)
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -177,8 +177,13 @@ fun CustomFormsComponent(
                                 scrollEnabled.value = true
                             } else {
                                 offsetX += offset.x
-                                // todo change
-                                if (offsetY + offset.y < screenHeightPx && offsetY + offset.y > -screenHeightPx) {
+
+                                Log.e(
+                                    "Ramesh offset issue ",
+                                    "screenHeightPx = $screenHeightPx offsetY = $offsetY offset.y = ${offset.y} === ${offset.y + offsetY}"
+                                )
+                                if (abs(offsetY + offset.y) <= screenHeightPx / 2) {
+//                                if (offsetY + offset.y < screenHeightPx && offsetY + offset.y > -screenHeightPx) {
                                     offsetY += offset.y
                                 }
 //                                if (zoom > 1) {

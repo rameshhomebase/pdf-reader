@@ -161,9 +161,9 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
             val pageData = Gson().fromJson<PageData>(json, PageData::class.java)
             // Load in an already created PDF
 //            val document: PDDocument = PDDocument.load(assets.open("doc_ex_2_rotation_fixed.pdf"))
-//            val document: PDDocument = PDDocument.load(assets.open("guide.pdf"))
+            val document: PDDocument = PDDocument.load(assets.open("guide.pdf"))
 //            val document: PDDocument = PDDocument.load(assets.open("page_1.pdf"))
-            val document: PDDocument = PDDocument.load(assets.open("template_simple.pdf"))
+//            val document: PDDocument = PDDocument.load(assets.open("template_simple.pdf"))
 
             val pagesImage = mutableListOf<Pair<ImageBitmap, List<Fields>>>()
             val totalPages = document.pages.count
@@ -173,6 +173,7 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
             val renderer = PDFRenderer(document)
             for (index in 0 until totalPages) {
                 val box = document.getPage(index).cropBox
+                Log.e("Ramesh width height", "${box.width}  ${box.height}")
                 val scaleFactor =
                     if (width > box.width) width.toFloat() / box.width else box.width / width
                 // Render the image to an RGB Bitmap
