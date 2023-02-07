@@ -161,9 +161,9 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
             val pageData = Gson().fromJson<PageData>(json, PageData::class.java)
             // Load in an already created PDF
 //            val document: PDDocument = PDDocument.load(assets.open("doc_ex_2_rotation_fixed.pdf"))
-            val document: PDDocument = PDDocument.load(assets.open("guide.pdf"))
+//            val document: PDDocument = PDDocument.load(assets.open("guide.pdf"))
 //            val document: PDDocument = PDDocument.load(assets.open("page_1.pdf"))
-//            val document: PDDocument = PDDocument.load(assets.open("template_simple.pdf"))
+            val document: PDDocument = PDDocument.load(assets.open("template_simple.pdf"))
 
             val pagesImage = mutableListOf<Pair<ImageBitmap, List<Fields>>>()
             val totalPages = document.pages.count
