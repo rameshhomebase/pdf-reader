@@ -199,7 +199,7 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
                                             ),
 //                                    + inputHeight
                                     TYPE_INPUT,
-                                    it.value.orEmpty()
+                                    it.value.orEmpty(),
                                 )
                             }
                         }
@@ -324,7 +324,7 @@ data class PageData(val pages: List<Page>)
 data class Page(val fields: List<Field>)
 data class Field(val position: List<Int>, val type: String, val value: String? = null)
 
-data class Fields(val x: Int, val y: Int, val type: String, val text: String)
+data class Fields(val x: Int, val y: Int, val type: String, val text: String, val tag: String = "$x $y")
 
 const val TYPE_INPUT = "input"
 const val TYPE_CHECKBOX = "checkbox"

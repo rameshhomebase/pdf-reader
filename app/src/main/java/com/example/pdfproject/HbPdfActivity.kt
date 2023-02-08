@@ -17,6 +17,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
+import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -30,6 +31,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -84,7 +86,7 @@ fun CustomFormScreen(viewModel: MainViewModel) {
                 topBar = {
 //                    Column(
 //                        Modifier
-//                            .height(70.dp)
+//                            .height(70.dp).zIndex(1f)
 //                            .fillMaxHeight()
 //                            .background(color = Color.Blue)
 //                    ) {
@@ -92,27 +94,52 @@ fun CustomFormScreen(viewModel: MainViewModel) {
                 }
             ) {
                 var scale by remember { mutableStateOf(1f) }
+                val focusManager = LocalFocusManager.current
 
 //                Column(
-//                    Modifier.size(1080.dp, 2200.dp)
+////                    Modifier.size(1080.dp, 2200.dp)
 //                ) {
-                val scrollEnabled = remember { mutableStateOf(true) }
-                CustomFormsComponent(list = state, scrollEnabled = scrollEnabled)
+                    Text(
+                        text = "This is header text",
+                        modifier = Modifier.zIndex(2f).height(48.dp).fillMaxWidth().background(
+                            Color.Green
+                        ).clickable {
+                            focusManager.moveFocus(FocusDirection.Down)
+                        }
+                    )
+                    val scrollEnabled = remember { mutableStateOf(true) }
+                    CustomFormsComponent(modifier = Modifier.padding(top = 48.dp), list = state, scrollEnabled = scrollEnabled)
 //                CustomFormsComponentNative(list = state)
 //                ViewPager(list = state, scrollEnabled = scrollEnabled)
-//                    Footer()
+//                    Footer {
+//                        focusManager.moveFocus(FocusDirection.Next)
+//                    }
 //                }
             }
         }
     }
 }
 
+@Composable
+fun Footer(onClick: () -> Unit) {
+    TextButton(
+        onClick = onClick,
+        Modifier.zIndex(2f).height(48.dp)
+            .fillMaxWidth().background(
+                Color.Blue
+            )
+    ) {
+        Text(text = "Start")
+    }
+}
+
 @OptIn(ExperimentalPagerApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun CustomFormsComponent(
+    modifier: Modifier,
     list: List<Pair<ImageBitmap, List<Fields>>>,
     minScale: Float = 1f,
-    maxScale: Float = 2f,
+    maxScale: Float = 4f,
     scrollEnabled: MutableState<Boolean>,
     isRotation: Boolean = false
 ) {
@@ -129,10 +156,11 @@ fun CustomFormsComponent(
         mutableStateOf(ScrollState(0))
     }
     Box(
-        modifier = Modifier
+        modifier = modifier.then (
+            Modifier
             .wrapContentSize()
 // //            .verticalScroll(scrollState)
-            .fillMaxSize(1f)
+//            .fillMaxSize(1f)
 //            .background(color = Color.Blue)
             .combinedClickable(
                 interactionSource = remember { MutableInteractionSource() },
@@ -182,8 +210,18 @@ fun CustomFormsComponent(
                                     "Ramesh offset issue ",
                                     "screenHeightPx = $screenHeightPx offsetY = $offsetY offset.y = ${offset.y} === ${offset.y + offsetY}"
                                 )
-                                if (abs(offsetY + offset.y) <= screenHeightPx / 2) {
+                                Log.e(
+                                    "Ramesh offset issue ",
+                                    "scale = ${((scale.value -1) * abs(screenHeightPx)) / 2}"
+                                )
+                                // screen height = 2212
+                                // scale factor 4 -> offsety = +/- 3236  (n-3)*h + h = h/2 + h
+                                // scale factor 3 -> offsety = +/- 2212  (n-3)*h + h = h        = (n-2)h/n -
+                                // scale factor 2 -> offsety = +/- 1100  (n-3)*h + h = h/2      = (n-1)h/n - 0
+
+//                                if (abs(offsetY + offset.y) <= screenHeightPx / 2) {
 //                                if (offsetY + offset.y < screenHeightPx && offsetY + offset.y > -screenHeightPx) {
+                                if (abs(offsetY + offset.y) <= ((scale.value - 1) * abs(screenHeightPx)) / 2) {
                                     offsetY += offset.y
                                 }
 //                                if (zoom > 1) {
@@ -206,13 +244,13 @@ fun CustomFormsComponent(
                     }
                 }
             }
-    ) {
-        LazyColumn(
-//            Modifier.verticalScroll(state = rememberScrollState())
+    ) ){
+        Column(
+            Modifier.verticalScroll(state = rememberScrollState())
 //            flingBehavior = FlingBehavior
         ) {
-            itemsIndexed(list) { index, it ->
-//            list.forEachIndexed { index, it ->
+//            itemsIndexed(list) { index, it ->
+            list.forEachIndexed { index, it ->
                 Page(
                     pageContent = {
                         PageContent(
