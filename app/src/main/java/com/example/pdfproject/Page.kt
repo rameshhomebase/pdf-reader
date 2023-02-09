@@ -1,27 +1,30 @@
 package com.example.pdfproject
 
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.Layout
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.layout.positionInRoot
+import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.launch
 
 @Composable
 fun Page(
@@ -62,12 +65,12 @@ fun Page(
     }
 }
 
-
 @Composable
 fun PageContent(
     modifier: Modifier = Modifier,
     fields: List<Fields>,
-    imagePainter: Painter
+    imagePainter: Painter,
+    focusManager: FocusManager? = null
 ) {
     Image(
         painter = imagePainter,
@@ -81,27 +84,52 @@ fun PageContent(
 //            }
     )
     fields.forEach {
-        InputField(it)
+        InputField(it, focusManager)
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun InputField(field: Fields) {
+fun InputField(field: Fields, focusManager: FocusManager?) {
     var text by remember {
         mutableStateOf(field.text)
     }
-
+    val bringIntoViewRequester = remember { BringIntoViewRequester() }
+    val coroutineScope = rememberCoroutineScope()
     BasicTextField(
-
         textStyle = TextStyle(fontSize = 10.sp),
-        modifier = Modifier
+        modifier = Modifier.onFocusChanged {
+            // todo add
+            if (it.isFocused) {
+                coroutineScope.launch {
+                    bringIntoViewRequester.bringIntoView()
+                }
+            }
+        }
             .defaultMinSize(10.dp, 60.dp)
-            .wrapContentSize().testTag(field.tag).focusable(enabled = true),
+            .wrapContentSize()
+            .testTag(field.tag)
+            .onGloballyPositioned {
+                val positionInParent = it.positionInParent()
+                val positionInRoot = it.positionInRoot()
+
+                Log.e(
+                    "Ramesh InputField ${field.tag}",
+                    "Global Position positionInParent ${positionInParent.x} ${positionInParent.y}"
+                )
+                Log.e(
+                    "Ramesh InputField ${field.tag}",
+                    "Global Position ${positionInRoot.x} ${positionInRoot.y}"
+                )
+            },
         value = text,
         singleLine = true,
         onValueChange = {
             text = it
         },
-        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next)
+        keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
+        keyboardActions = KeyboardActions(onNext = {
+            focusManager?.moveFocus(FocusDirection.Down)
+        })
     )
 }

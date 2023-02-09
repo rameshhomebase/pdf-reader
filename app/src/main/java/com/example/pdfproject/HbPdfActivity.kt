@@ -256,7 +256,8 @@ fun CustomFormsComponent(
                         PageContent(
                             modifier = Modifier,
                             imagePainter = BitmapPainter(it.first),
-                            fields = it.second
+                            fields = it.second,
+                            focusManager = focusManager
                         )
                     },
                     fields = it.second,
