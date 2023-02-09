@@ -12,9 +12,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusDirection
-import androidx.compose.ui.focus.FocusManager
-import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.focus.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.*
@@ -70,7 +68,8 @@ fun PageContent(
     modifier: Modifier = Modifier,
     fields: List<Fields>,
     imagePainter: Painter,
-    focusManager: FocusManager? = null
+    focusManager: FocusManager? = null,
+    focusRequester: FocusRequester? = null
 ) {
     Image(
         painter = imagePainter,
@@ -83,22 +82,28 @@ fun PageContent(
 //                Log.e("ramesh image size", "x = ${it.size.width} y = ${it.size.height}")
 //            }
     )
-    fields.forEach {
-        InputField(it, focusManager)
+    fields.forEachIndexed { index, it ->
+        InputField(it, focusManager, if (index == 0) focusRequester else null)
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun InputField(field: Fields, focusManager: FocusManager?) {
+fun InputField(
+    field: Fields,
+    focusManager: FocusManager?,
+    focusRequester: FocusRequester?
+) {
     var text by remember {
         mutableStateOf(field.text)
     }
     val bringIntoViewRequester = remember { BringIntoViewRequester() }
     val coroutineScope = rememberCoroutineScope()
+    val modifier: Modifier =
+        if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
     BasicTextField(
         textStyle = TextStyle(fontSize = 10.sp),
-        modifier = Modifier.onFocusChanged {
+        modifier = modifier.onFocusChanged {
             // todo add
             if (it.isFocused) {
                 coroutineScope.launch {

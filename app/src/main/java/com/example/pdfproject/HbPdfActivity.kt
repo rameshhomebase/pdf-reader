@@ -15,9 +15,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusDirection
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -62,7 +64,7 @@ class HbPdfActivity : ComponentActivity() {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun CustomFormScreen(viewModel: MainViewModel) {
     val configuration = LocalConfiguration.current
@@ -95,20 +97,27 @@ fun CustomFormScreen(viewModel: MainViewModel) {
             ) {
                 var scale by remember { mutableStateOf(1f) }
                 val focusManager = LocalFocusManager.current
-
+                val focusRequester = FocusRequester()
 //                Column(
-////                    Modifier.size(1080.dp, 2200.dp)
+// //                    Modifier.size(1080.dp, 2200.dp)
 //                ) {
-                    Text(
-                        text = "This is header text",
-                        modifier = Modifier.zIndex(2f).height(48.dp).fillMaxWidth().background(
-                            Color.Green
-                        ).clickable {
-                            focusManager.moveFocus(FocusDirection.Down)
-                        }
-                    )
-                    val scrollEnabled = remember { mutableStateOf(true) }
-                    CustomFormsComponent(modifier = Modifier.padding(top = 48.dp), list = state, scrollEnabled = scrollEnabled)
+                Text(
+                    text = "This is header text",
+                    modifier = Modifier.zIndex(2f).height(48.dp).fillMaxWidth().background(
+                        Color.Green
+                    ).clickable {
+//                        focusManager.clearFocus(true)
+//                        focusManager.moveFocus(FocusDirection.Next)
+                        focusRequester.requestFocus()
+                    }
+                )
+                val scrollEnabled = remember { mutableStateOf(true) }
+                CustomFormsComponent(
+                    modifier = Modifier.padding(top = 48.dp),
+                    list = state,
+                    scrollEnabled = scrollEnabled,
+                    focusRequester = focusRequester
+                )
 //                CustomFormsComponentNative(list = state)
 //                ViewPager(list = state, scrollEnabled = scrollEnabled)
 //                    Footer {
@@ -141,7 +150,8 @@ fun CustomFormsComponent(
     minScale: Float = 1f,
     maxScale: Float = 4f,
     scrollEnabled: MutableState<Boolean>,
-    isRotation: Boolean = false
+    isRotation: Boolean = false,
+        focusRequester: FocusRequester
 ) {
     var targetScale by remember { mutableStateOf(1f) }
     val scale = animateFloatAsState(targetValue = maxOf(minScale, minOf(maxScale, targetScale)))
@@ -156,95 +166,101 @@ fun CustomFormsComponent(
         mutableStateOf(ScrollState(0))
     }
     Box(
-        modifier = modifier.then (
+        modifier = modifier.then(
             Modifier
-            .wrapContentSize()
+                .wrapContentSize()
 // //            .verticalScroll(scrollState)
 //            .fillMaxSize(1f)
 //            .background(color = Color.Blue)
-            .combinedClickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = {
-                    focusManager.clearFocus()
-                },
-                onDoubleClick = {
-                    if (targetScale >= 2f) {
-                        targetScale = 1f
-                        offsetX = 1f
-                        offsetY = 1f
-                        scrollEnabled.value = true
-                    } else targetScale = 3f
+                .combinedClickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {
+                        focusManager.clearFocus()
+                    },
+                    onDoubleClick = {
+                        if (targetScale >= 2f) {
+                            targetScale = 1f
+                            offsetX = 1f
+                            offsetY = 1f
+                            scrollEnabled.value = true
+                        } else targetScale = 3f
 //                    scrollState = ScrollState(scrollState.value)
-                }
-            )
-            .graphicsLayer {
-                this.scaleX = scale.value
-                this.scaleY = scale.value
+                    }
+                )
+                .graphicsLayer {
+                    this.scaleX = scale.value
+                    this.scaleY = scale.value
 //                if (isRotation) {
 //                    rotationZ = rotationState
 //                }
-                this.translationX = offsetX
-                this.translationY = offsetY
+                    this.translationX = offsetX
+                    this.translationY = offsetY
 
-                Log.e("Ramesh lazycolumn size", "${this.size.width} ${this.size.height}")
-            }
-            .pointerInput(Unit) {
-                forEachGesture {
-                    awaitPointerEventScope {
-                        awaitFirstDown()
-                        do {
-                            val event = awaitPointerEvent()
-                            val zoom = event.calculateZoom()
-                            targetScale *= zoom
-                            val offset = event.calculatePan()
-                            if (targetScale <= 1) {
-                                offsetX = 1f
-                                offsetY = 1f
-                                targetScale = 1f
-                                scrollEnabled.value = true
-                            } else {
-                                offsetX += offset.x
+                    Log.e("Ramesh lazycolumn size", "${this.size.width} ${this.size.height}")
+                }
+                .pointerInput(Unit) {
+                    forEachGesture {
+                        awaitPointerEventScope {
+                            awaitFirstDown()
+                            do {
+                                val event = awaitPointerEvent()
+                                val zoom = event.calculateZoom()
+                                targetScale *= zoom
+                                val offset = event.calculatePan()
+                                if (targetScale <= 1) {
+                                    offsetX = 1f
+                                    offsetY = 1f
+                                    targetScale = 1f
+                                    scrollEnabled.value = true
+                                } else {
+                                    offsetX += offset.x
 
-                                Log.e(
-                                    "Ramesh offset issue ",
-                                    "screenHeightPx = $screenHeightPx offsetY = $offsetY offset.y = ${offset.y} === ${offset.y + offsetY}"
-                                )
-                                Log.e(
-                                    "Ramesh offset issue ",
-                                    "scale = ${((scale.value -1) * abs(screenHeightPx)) / 2}"
-                                )
-                                // screen height = 2212
-                                // scale factor 4 -> offsety = +/- 3236  (n-3)*h + h = h/2 + h
-                                // scale factor 3 -> offsety = +/- 2212  (n-3)*h + h = h        = (n-2)h/n -
-                                // scale factor 2 -> offsety = +/- 1100  (n-3)*h + h = h/2      = (n-1)h/n - 0
+                                    Log.e(
+                                        "Ramesh offset issue ",
+                                        "screenHeightPx = $screenHeightPx offsetY = $offsetY offset.y = ${offset.y} === ${offset.y + offsetY}"
+                                    )
+                                    Log.e(
+                                        "Ramesh offset issue ",
+                                        "scale = ${((scale.value - 1) * abs(screenHeightPx)) / 2}"
+                                    )
+                                    // screen height = 2212
+                                    // scale factor 4 -> offsety = +/- 3236  (n-3)*h + h = h/2 + h
+                                    // scale factor 3 -> offsety = +/- 2212  (n-3)*h + h = h        = (n-2)h/n -
+                                    // scale factor 2 -> offsety = +/- 1100  (n-3)*h + h = h/2      = (n-1)h/n - 0
 
 //                                if (abs(offsetY + offset.y) <= screenHeightPx / 2) {
 //                                if (offsetY + offset.y < screenHeightPx && offsetY + offset.y > -screenHeightPx) {
-                                if (abs(offsetY + offset.y) <= ((scale.value - 1) * abs(screenHeightPx)) / 2) {
-                                    offsetY += offset.y
-                                }
+                                    if (abs(offsetY + offset.y) <= (
+                                        (scale.value - 1) * abs(
+                                                screenHeightPx
+                                            )
+                                        ) / 2
+                                    ) {
+                                        offsetY += offset.y
+                                    }
 //                                if (zoom > 1) {
 //                                    scrollEnabled.value = false
 //                                    rotationState += event.calculateRotation()
 //                                }
-                                val imageWidth = screenWidthPx * scale.value
+                                    val imageWidth = screenWidthPx * scale.value
 
-                                val borderReached =
-                                    imageWidth - screenWidthPx - 2 * abs(offsetX)
-                                scrollEnabled.value = borderReached <= 0
-                                if (borderReached < 0) {
-                                    offsetX =
-                                        ((imageWidth - screenWidthPx) / 2f).withSign(offsetX)
-                                    if (offset.x != 0f) offsetY -= offset.y
+                                    val borderReached =
+                                        imageWidth - screenWidthPx - 2 * abs(offsetX)
+                                    scrollEnabled.value = borderReached <= 0
+                                    if (borderReached < 0) {
+                                        offsetX =
+                                            ((imageWidth - screenWidthPx) / 2f).withSign(offsetX)
+                                        if (offset.x != 0f) offsetY -= offset.y
+                                    }
                                 }
-                            }
-                            Log.e("Ramesh lazycolumn xy ", "$offsetX $offsetY")
-                        } while (event.changes.any { it.pressed })
+                                Log.e("Ramesh lazycolumn xy ", "$offsetX $offsetY")
+                            } while (event.changes.any { it.pressed })
+                        }
                     }
                 }
-            }
-    ) ){
+        )
+    ) {
         Column(
             Modifier.verticalScroll(state = rememberScrollState())
 //            flingBehavior = FlingBehavior
@@ -257,7 +273,8 @@ fun CustomFormsComponent(
                             modifier = Modifier,
                             imagePainter = BitmapPainter(it.first),
                             fields = it.second,
-                            focusManager = focusManager
+                            focusManager = focusManager,
+                            focusRequester = if(index == 0) focusRequester else null
                         )
                     },
                     fields = it.second,
