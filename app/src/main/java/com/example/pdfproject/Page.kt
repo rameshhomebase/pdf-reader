@@ -141,7 +141,7 @@ fun InputField(
         },
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
         keyboardActions = KeyboardActions(onNext = {
-            focusManager?.moveFocus(FocusDirection.Down)
+            focusManager?.moveFocus(FocusDirection.Next)
         })
     )
 }
