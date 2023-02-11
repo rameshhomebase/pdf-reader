@@ -1,8 +1,7 @@
 package com.example.pdfproject
 
 import android.util.Log
-import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.wrapContentSize
@@ -13,7 +12,9 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.layout.*
 import androidx.compose.ui.platform.testTag
@@ -53,7 +54,7 @@ fun Page(
                 placeables[0].place(0, 0, 0f)
                 for (index in 1..placeables.lastIndex) {
                     val fieldValue = fields[index - 1]
-                    val offset = IntOffset(fieldValue.x, fieldValue.y - 70)
+                    val offset = IntOffset(fieldValue.x, fieldValue.y - 10)
                     placeables[index].placeRelative(offset, 0f)
 //                    placeables[index].placeRelative(fieldValue.x, fieldValue.y, 0f)
 //                    placeables[index].place(fieldValue.x, fieldValue.y - 120, 0f)
@@ -69,7 +70,8 @@ fun PageContent(
     fields: List<Fields>,
     imagePainter: Painter,
     focusManager: FocusManager? = null,
-    focusRequester: FocusRequester? = null
+    focusRequester: FocusRequester? = null,
+    onFocus: ((String) -> Unit)? = null
 ) {
     Image(
         painter = imagePainter,
@@ -83,7 +85,7 @@ fun PageContent(
 //            }
     )
     fields.forEachIndexed { index, it ->
-        InputField(it, focusManager, if (index == 0) focusRequester else null)
+        InputField(it, focusManager, if (index == 0) focusRequester else null, onFocus)
     }
 }
 
@@ -92,7 +94,8 @@ fun PageContent(
 fun InputField(
     field: Fields,
     focusManager: FocusManager?,
-    focusRequester: FocusRequester?
+    focusRequester: FocusRequester?,
+    onFocus: ((String) -> Unit)? = null
 ) {
     var text by remember {
         mutableStateOf(field.text)
@@ -101,23 +104,27 @@ fun InputField(
     val coroutineScope = rememberCoroutineScope()
     val modifier: Modifier =
         if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
+    var positionInParent by remember {
+    mutableStateOf(Offset(0f,0f))
+    }
     BasicTextField(
         textStyle = TextStyle(fontSize = 10.sp),
-        modifier = modifier.onFocusChanged {
-            // todo add
-            if (it.isFocused) {
-                coroutineScope.launch {
-                    bringIntoViewRequester.bringIntoView()
+        modifier = modifier.background(Color.White, RectangleShape).border(BorderStroke(1.dp, Color.Blue))
+            .onFocusChanged {
+                // todo add
+                if (it.isFocused) {
+                    coroutineScope.launch {
+                        bringIntoViewRequester.bringIntoView()
+                    }
+                    onFocus?.invoke("${positionInParent.x} ${positionInParent.y}")
                 }
             }
-        }
-            .defaultMinSize(10.dp, 60.dp)
+            .defaultMinSize(60.dp, 10.dp)
             .wrapContentSize()
             .testTag(field.tag)
             .onGloballyPositioned {
-                val positionInParent = it.positionInParent()
+                positionInParent = it.positionInParent()
                 val positionInRoot = it.positionInRoot()
-
                 Log.e(
                     "Ramesh InputField ${field.tag}",
                     "Global Position positionInParent ${positionInParent.x} ${positionInParent.y}"

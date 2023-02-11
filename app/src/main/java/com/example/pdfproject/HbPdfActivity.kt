@@ -18,8 +18,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
-import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
@@ -32,6 +32,7 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.compose.NavHost
@@ -41,6 +42,7 @@ import com.example.pdfproject.ui.theme.PdfProjectTheme
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import kotlin.math.abs
+import kotlin.math.roundToInt
 import kotlin.math.withSign
 
 class HbPdfActivity : ComponentActivity() {
@@ -109,17 +111,28 @@ fun CustomFormScreen(viewModel: MainViewModel) {
 //                        focusManager.clearFocus(true)
 //                        focusManager.moveFocus(FocusDirection.Next)
                         focusRequester.requestFocus()
+
                     }
                 )
                 val scrollEnabled = remember { mutableStateOf(true) }
+
                 CustomFormsComponent(
                     modifier = Modifier.padding(top = 48.dp),
                     list = state,
                     scrollEnabled = scrollEnabled,
-                    focusRequester = focusRequester
+                    focusRequester = focusRequester,
+                    offSetStateX = viewModel.offsetXState,
+                    offSetStateY = viewModel.offsetYState,
+                    onScale = viewModel::onScaleChange,
+                    scaleState = viewModel.scaleFactorState,
+                    onFocus = viewModel::onFocus
                 )
 //                CustomFormsComponentNative(list = state)
-//                ViewPager(list = state, scrollEnabled = scrollEnabled)
+//                ViewPager(
+//                    list = state,
+//                    scrollEnabled = scrollEnabled,
+//                    focusRequester = focusRequester
+//                )
 //                    Footer {
 //                        focusManager.moveFocus(FocusDirection.Next)
 //                    }
@@ -151,13 +164,20 @@ fun CustomFormsComponent(
     maxScale: Float = 4f,
     scrollEnabled: MutableState<Boolean>,
     isRotation: Boolean = false,
-        focusRequester: FocusRequester
+    focusRequester: FocusRequester,
+    onScale: (Float, Offset) -> Unit,
+    offSetStateX: MutableState<Float>,
+    offSetStateY: MutableState<Float>,
+    scaleState: MutableState<Float>,
+    onFocus: (String) -> Unit
 ) {
-    var targetScale by remember { mutableStateOf(1f) }
+    var targetScale by remember { scaleState }
     val scale = animateFloatAsState(targetValue = maxOf(minScale, minOf(maxScale, targetScale)))
     var rotationState by remember { mutableStateOf(1f) }
-    var offsetX by remember { mutableStateOf(1f) }
-    var offsetY by remember { mutableStateOf(1f) }
+//    var offsetX by remember { offSetStateX }
+//    var offsetY by remember { offSetStateY }
+    var offsetX by remember { mutableStateOf(0f) }
+    var offsetY by remember { mutableStateOf(0f) }
     val configuration = LocalConfiguration.current
     val screenWidthPx = with(LocalDensity.current) { configuration.screenWidthDp.dp.toPx() }
     val screenHeightPx = with(LocalDensity.current) { configuration.screenHeightDp.dp.toPx() }
@@ -166,7 +186,10 @@ fun CustomFormsComponent(
         mutableStateOf(ScrollState(0))
     }
     Box(
-        modifier = modifier.then(
+        modifier = modifier
+            // apply pan offset state as a layout transformation before other modifiers
+//        .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
+            .then(
             Modifier
                 .wrapContentSize()
 // //            .verticalScroll(scrollState)
@@ -184,7 +207,10 @@ fun CustomFormsComponent(
                             offsetX = 1f
                             offsetY = 1f
                             scrollEnabled.value = true
-                        } else targetScale = 3f
+                        } else {
+                            targetScale = 3f
+                        }
+                        onScale(targetScale, Offset(offsetX, offsetY))
 //                    scrollState = ScrollState(scrollState.value)
                     }
                 )
@@ -203,11 +229,13 @@ fun CustomFormsComponent(
                     forEachGesture {
                         awaitPointerEventScope {
                             awaitFirstDown()
+//                            var offsetX = offSetStateX.value
+//                            var offsetY = offSetStateY.value
                             do {
                                 val event = awaitPointerEvent()
                                 val zoom = event.calculateZoom()
                                 targetScale *= zoom
-                                val offset = event.calculatePan()
+                                val offset = event.calculatePan() * 2f
                                 if (targetScale <= 1) {
                                     offsetX = 1f
                                     offsetY = 1f
@@ -254,6 +282,8 @@ fun CustomFormsComponent(
                                         if (offset.x != 0f) offsetY -= offset.y
                                     }
                                 }
+                                onScale(targetScale, Offset(offsetX, offsetY))
+
                                 Log.e("Ramesh lazycolumn xy ", "$offsetX $offsetY")
                             } while (event.changes.any { it.pressed })
                         }
@@ -261,8 +291,9 @@ fun CustomFormsComponent(
                 }
         )
     ) {
+
         Column(
-            Modifier.verticalScroll(state = rememberScrollState())
+            Modifier.verticalScroll(state = rememberScrollState(offsetY.toInt()))
 //            flingBehavior = FlingBehavior
         ) {
 //            itemsIndexed(list) { index, it ->
@@ -274,7 +305,8 @@ fun CustomFormsComponent(
                             imagePainter = BitmapPainter(it.first),
                             fields = it.second,
                             focusManager = focusManager,
-                            focusRequester = if(index == 0) focusRequester else null
+                            focusRequester = if (index == 0) focusRequester else null,
+                            onFocus = onFocus
                         )
                     },
                     fields = it.second,
