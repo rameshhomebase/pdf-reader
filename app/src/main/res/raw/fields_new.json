@@ -1,0 +1,110 @@
+{
+"pages": [
+  {
+    "page": 1,
+    "fields": [
+      {
+        "position": [
+          85,
+          614
+        ],
+        "type": "text"
+      },
+      {
+        "position": [
+          160,
+          405
+        ],
+        "type": "text"
+      },
+      {
+        "position": [
+          100,
+          382
+        ],
+        "type": "date"
+      },
+      {
+        "position": [
+          196,
+          340
+        ],
+        "type": "signature"
+      },
+      {
+        "position": [
+          100,
+          318
+        ],
+        "type": "date"
+      }
+    ]
+  },
+  {
+    "page": 2,
+    "fields": [
+      {
+        "position": [
+          90,
+          520
+        ],
+        "type": "date"
+      },
+      {
+        "position": [
+          90,
+          500
+        ],
+        "type": "text"
+      },
+      {
+        "position": [
+          380,
+          170
+        ],
+        "type": "signature"
+      },
+      {
+        "position": [
+          380,
+          120
+        ],
+        "type": "signature"
+      },
+      {
+        "position": [
+          545,
+          170
+        ],
+        "type": "date"
+      },
+      {
+        "position": [
+          545,
+          120
+        ],
+        "type": "date"
+      }
+    ]
+  },
+  {
+    "page": 3,
+    "fields": [
+      {
+        "position": [
+          165,
+          468
+        ],
+        "type": "text"
+      },
+      {
+        "position": [
+          165,
+          434
+        ],
+        "type": "text"
+      }
+    ]
+  }
+]
+}

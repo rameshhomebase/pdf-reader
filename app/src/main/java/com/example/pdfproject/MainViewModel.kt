@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.lifecycle.ViewModel
@@ -18,6 +19,7 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.rendering.ImageType
 import com.tom_roush.pdfbox.rendering.PDFRenderer
 import com.tom_roush.pdfbox.rendering.RenderDestination
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainViewModel(private val assets: AssetManager, private val resources: Resources) :
@@ -156,14 +158,15 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
 
     fun loadDataReverse(width: Int, height: Int) {
         viewModelScope.launch {
-            val json = resources.openRawResource(R.raw.fields)
+            val json = resources.openRawResource(R.raw.fields_new)
                 .bufferedReader().use { it.readText() }
             val pageData = Gson().fromJson<PageData>(json, PageData::class.java)
             // Load in an already created PDF
 //            val document: PDDocument = PDDocument.load(assets.open("doc_ex_2_rotation_fixed.pdf"))
 //            val document: PDDocument = PDDocument.load(assets.open("guide.pdf"))
 //            val document: PDDocument = PDDocument.load(assets.open("page_1.pdf"))
-            val document: PDDocument = PDDocument.load(assets.open("template_simple.pdf"))
+//            val document: PDDocument = PDDocument.load(assets.open("template_simple.pdf"))
+            val document: PDDocument = PDDocument.load(assets.open("template_three_pages.pdf"))
 
             val pagesImage = mutableListOf<Pair<ImageBitmap, List<Fields>>>()
             val totalPages = document.pages.count
@@ -317,6 +320,34 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
                 }
             }
         }
+    }
+
+    var offsetXState = mutableStateOf(0f)
+    var offsetYState = mutableStateOf(0f)
+    var scaleFactor: Float = 1f
+    var scaleFactorState = mutableStateOf(0f)
+    fun onScaleChange(scale: Float, offset: Offset) {
+        offsetXState.value = offset.x
+        offsetXState.value = offset.y
+        scaleFactor = scale
+    }
+
+    fun onFocus(tag: String) {
+        scaleFactorState.value = 3f
+        viewModelScope.launch {
+            delay(1000)
+//            offsetXState.value = -1000f
+//            offsetYState.value =  -1712f
+            val arr = tag.split(" ")
+        Log.d("Ramesh onFocus ","$tag")
+        offsetXState.value = arr[0].toFloat()
+        offsetYState.value = arr[1].toFloat()
+        }
+//        val arr = tag.split(" ")
+//        offsetXState.value = arr[0].toFloat() * scaleFactor
+//        offsetYState.value = arr[1].toFloat() * scaleFactor
+//        offsetXState.value = 456f
+//        offsetYState.value =  669f
     }
 }
 
