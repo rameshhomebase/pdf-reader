@@ -19,7 +19,6 @@ import com.tom_roush.pdfbox.pdmodel.PDDocument
 import com.tom_roush.pdfbox.rendering.ImageType
 import com.tom_roush.pdfbox.rendering.PDFRenderer
 import com.tom_roush.pdfbox.rendering.RenderDestination
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class MainViewModel(private val assets: AssetManager, private val resources: Resources) :
@@ -156,6 +155,7 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
         }
     }
 
+    var pdfHeight = 0
     fun loadDataReverse(width: Int, height: Int) {
         viewModelScope.launch {
             val json = resources.openRawResource(R.raw.fields_new)
@@ -173,6 +173,7 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
 
             Log.e("Ramesh Scale Factor", "$scaleFactor screen width = $width ")
             // Create a renderer for the document
+
             val renderer = PDFRenderer(document)
             for (index in 0 until totalPages) {
                 val box = document.getPage(index).cropBox
@@ -186,6 +187,7 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
                     ImageType.RGB,
                     RenderDestination.VIEW
                 )
+                pdfHeight += image.height
                 pagesImage.add(
                     Pair(
                         image.asImageBitmap(),
@@ -202,7 +204,7 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
                                             ),
 //                                    + inputHeight
                                     TYPE_INPUT,
-                                    it.value.orEmpty(),
+                                    it.value.orEmpty()
                                 )
                             }
                         }
@@ -210,6 +212,8 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
                 )
             }
             imagesLD = (pagesImage)
+
+            Log.v("Ramesh VM", "Total pdf height $pdfHeight")
         }
     }
 
@@ -325,7 +329,8 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
     var offsetXState = mutableStateOf(0f)
     var offsetYState = mutableStateOf(0f)
     var scaleFactor: Float = 1f
-    var scaleFactorState = mutableStateOf(0f)
+    var scaleFactorState = mutableStateOf(2f)
+    var nextInput = mutableStateOf(Pair(0, 0))
     fun onScaleChange(scale: Float, offset: Offset) {
         offsetXState.value = offset.x
         offsetXState.value = offset.y
@@ -333,21 +338,47 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
     }
 
     fun onFocus(tag: String) {
-        scaleFactorState.value = 3f
-        viewModelScope.launch {
-            delay(1000)
-//            offsetXState.value = -1000f
-//            offsetYState.value =  -1712f
-            val arr = tag.split(" ")
-        Log.d("Ramesh onFocus ","$tag")
-        offsetXState.value = arr[0].toFloat()
-        offsetYState.value = arr[1].toFloat()
-        }
+//        scaleFactorState.value = 3f
+//        viewModelScope.launch {
+//            delay(1000)
+// //            offsetXState.value = -1000f
+// //            offsetYState.value =  -1712f
+//            val arr = tag.split(" ")
+//        Log.d("Ramesh onFocus ","$tag")
+//        offsetXState.value = arr[0].toFloat()
+//        offsetYState.value = arr[1].toFloat()
+//        }
 //        val arr = tag.split(" ")
 //        offsetXState.value = arr[0].toFloat() * scaleFactor
 //        offsetYState.value = arr[1].toFloat() * scaleFactor
-//        offsetXState.value = 456f
-//        offsetYState.value =  669f
+//        offsetXState.value = 780f
+//        offsetYState.value = -181f
+
+        fieldsMap[tag]?.let {
+            nextInput.value = it
+        }
+//        nextInput.value = Pair(50, 3720)
+    }
+
+    var heightFactor = 1f
+    val fieldsMap = mutableMapOf<String, Pair<Int, Int>>()
+    var heightRetrieved = 0
+    fun heightRetrieved(height: Int) {
+        if(height == heightRetrieved) return
+        heightRetrieved = height
+        heightFactor = if (pdfHeight > height) height.toFloat() / pdfHeight
+        else pdfHeight.toFloat() / height
+        var previousY = 0
+        imagesLD.forEachIndexed { index, pair ->
+            pair.second.forEach {
+//                previousY = if(index == 0)
+                fieldsMap[it.tag] = Pair(it.x, (it.y * heightFactor).toInt() + previousY)
+            }
+            previousY += (pair.first.height)
+        }
+    }
+
+    fun calculatePDFInfo() {
     }
 }
 
@@ -355,7 +386,13 @@ data class PageData(val pages: List<Page>)
 data class Page(val fields: List<Field>)
 data class Field(val position: List<Int>, val type: String, val value: String? = null)
 
-data class Fields(val x: Int, val y: Int, val type: String, val text: String, val tag: String = "$x $y")
+data class Fields(
+    val x: Int,
+    val y: Int,
+    val type: String,
+    val text: String,
+    val tag: String = "$x $y"
+)
 
 const val TYPE_INPUT = "input"
 const val TYPE_CHECKBOX = "checkbox"

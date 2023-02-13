@@ -1,5 +1,6 @@
 package com.example.pdfproject
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -139,11 +140,13 @@ fun CustomFormsComponentNative(
         scale = max(scale * zoomChange, 1f)
         rotation += rotationChange
         offset += offsetChange
+
+        Log.e("CustomFormsComponentNative", "Offset = ${offset.x} ${offset.y}")
     }
     Box(
         Modifier
             // apply pan offset state as a layout transformation before other modifiers
-            .offset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
+//            .offset { IntOffset(offset.x.roundToInt(), offset.y.roundToInt()) }
             // add transformable to listen to multitouch transformation events after offset
             .transformable(state = state)
             // optional for example: add double click to zoom
@@ -160,6 +163,9 @@ fun CustomFormsComponentNative(
                 translationY = offset.y
                 scaleX = scale
                 scaleY = scale
+                Log.e("CustomFormsComponentNative", "graphiclayer = ${translationX} ${translationY}")
+
+
             }
             .border(1.dp, Color.Green),
         contentAlignment = Alignment.Center

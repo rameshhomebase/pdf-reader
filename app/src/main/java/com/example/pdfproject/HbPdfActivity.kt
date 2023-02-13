@@ -32,7 +32,6 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.navigation.compose.NavHost
@@ -42,7 +41,6 @@ import com.example.pdfproject.ui.theme.PdfProjectTheme
 import com.google.accompanist.pager.ExperimentalPagerApi
 import com.tom_roush.pdfbox.android.PDFBoxResourceLoader
 import kotlin.math.abs
-import kotlin.math.roundToInt
 import kotlin.math.withSign
 
 class HbPdfActivity : ComponentActivity() {
@@ -105,28 +103,37 @@ fun CustomFormScreen(viewModel: MainViewModel) {
 //                ) {
                 Text(
                     text = "This is header text",
-                    modifier = Modifier.zIndex(2f).height(48.dp).fillMaxWidth().background(
-                        Color.Green
-                    ).clickable {
+                    modifier = Modifier
+                        .zIndex(2f)
+                        .height(48.dp)
+                        .fillMaxWidth()
+                        .background(
+                            Color.Green
+                        )
+                        .clickable {
 //                        focusManager.clearFocus(true)
 //                        focusManager.moveFocus(FocusDirection.Next)
-                        focusRequester.requestFocus()
-
-                    }
+                            focusRequester.requestFocus()
+                        }
                 )
                 val scrollEnabled = remember { mutableStateOf(true) }
-
-                CustomFormsComponent(
-                    modifier = Modifier.padding(top = 48.dp),
-                    list = state,
-                    scrollEnabled = scrollEnabled,
-                    focusRequester = focusRequester,
-                    offSetStateX = viewModel.offsetXState,
-                    offSetStateY = viewModel.offsetYState,
-                    onScale = viewModel::onScaleChange,
-                    scaleState = viewModel.scaleFactorState,
-                    onFocus = viewModel::onFocus
+                PdfViewer(
+                    modifier = Modifier,
+                    viewModel = viewModel,
+                    focusRequester = focusRequester
                 )
+//                CustomFormTest(
+//                    modifier = Modifier.padding(top = 48.dp),
+//                    list = state,
+//                    scrollEnabled = scrollEnabled,
+//                    focusRequester = focusRequester,
+//                    offSetStateX = viewModel.offsetXState,
+//                    offSetStateY = viewModel.offsetYState,
+//                    onScale = viewModel::onScaleChange,
+//                    scaleState = viewModel.scaleFactorState,
+// //                    scaleState = viewModel.scaleFactorState,
+//                    onFocus = viewModel::onFocus,
+//                )
 //                CustomFormsComponentNative(list = state)
 //                ViewPager(
 //                    list = state,
@@ -146,8 +153,11 @@ fun CustomFormScreen(viewModel: MainViewModel) {
 fun Footer(onClick: () -> Unit) {
     TextButton(
         onClick = onClick,
-        Modifier.zIndex(2f).height(48.dp)
-            .fillMaxWidth().background(
+        Modifier
+            .zIndex(2f)
+            .height(48.dp)
+            .fillMaxWidth()
+            .background(
                 Color.Blue
             )
     ) {
@@ -174,10 +184,10 @@ fun CustomFormsComponent(
     var targetScale by remember { scaleState }
     val scale = animateFloatAsState(targetValue = maxOf(minScale, minOf(maxScale, targetScale)))
     var rotationState by remember { mutableStateOf(1f) }
-//    var offsetX by remember { offSetStateX }
-//    var offsetY by remember { offSetStateY }
-    var offsetX by remember { mutableStateOf(0f) }
-    var offsetY by remember { mutableStateOf(0f) }
+    var offsetX by remember { offSetStateX }
+    var offsetY by remember { offSetStateY }
+//    var offsetX by remember { mutableStateOf(0f) }
+//    var offsetY by remember { mutableStateOf(0f) }
     val configuration = LocalConfiguration.current
     val screenWidthPx = with(LocalDensity.current) { configuration.screenWidthDp.dp.toPx() }
     val screenHeightPx = with(LocalDensity.current) { configuration.screenHeightDp.dp.toPx() }
@@ -185,113 +195,114 @@ fun CustomFormsComponent(
     var scrollState by remember {
         mutableStateOf(ScrollState(0))
     }
+
+//    DisposableEf
     Box(
         modifier = modifier
             // apply pan offset state as a layout transformation before other modifiers
 //        .offset { IntOffset(offsetX.roundToInt(), offsetY.roundToInt()) }
             .then(
-            Modifier
-                .wrapContentSize()
+                Modifier
+                    .wrapContentSize()
 // //            .verticalScroll(scrollState)
 //            .fillMaxSize(1f)
 //            .background(color = Color.Blue)
-                .combinedClickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null,
-                    onClick = {
-                        focusManager.clearFocus()
-                    },
-                    onDoubleClick = {
-                        if (targetScale >= 2f) {
-                            targetScale = 1f
-                            offsetX = 1f
-                            offsetY = 1f
-                            scrollEnabled.value = true
-                        } else {
-                            targetScale = 3f
-                        }
-                        onScale(targetScale, Offset(offsetX, offsetY))
+                    .combinedClickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
+                        onClick = {
+                            focusManager.clearFocus()
+                        },
+                        onDoubleClick = {
+                            if (targetScale >= 2f) {
+                                targetScale = 1f
+                                offsetX = 1f
+                                offsetY = 1f
+                                scrollEnabled.value = true
+                            } else {
+                                targetScale = 3f
+                            }
+                            onScale(targetScale, Offset(offsetX, offsetY))
 //                    scrollState = ScrollState(scrollState.value)
-                    }
-                )
-                .graphicsLayer {
-                    this.scaleX = scale.value
-                    this.scaleY = scale.value
+                        }
+                    )
+                    .graphicsLayer {
+                        this.scaleX = scale.value
+                        this.scaleY = scale.value
 //                if (isRotation) {
 //                    rotationZ = rotationState
 //                }
-                    this.translationX = offsetX
-                    this.translationY = offsetY
+                        this.translationX = offsetX
+                        this.translationY = offsetY
 
-                    Log.e("Ramesh lazycolumn size", "${this.size.width} ${this.size.height}")
-                }
-                .pointerInput(Unit) {
-                    forEachGesture {
-                        awaitPointerEventScope {
-                            awaitFirstDown()
+                        Log.e("Ramesh lazycolumn size", "${this.size.width} ${this.size.height}")
+                    }
+                    .pointerInput(Unit) {
+                        forEachGesture {
+                            awaitPointerEventScope {
+                                awaitFirstDown()
 //                            var offsetX = offSetStateX.value
 //                            var offsetY = offSetStateY.value
-                            do {
-                                val event = awaitPointerEvent()
-                                val zoom = event.calculateZoom()
-                                targetScale *= zoom
-                                val offset = event.calculatePan() * 2f
-                                if (targetScale <= 1) {
-                                    offsetX = 1f
-                                    offsetY = 1f
-                                    targetScale = 1f
-                                    scrollEnabled.value = true
-                                } else {
-                                    offsetX += offset.x
+                                do {
+                                    val event = awaitPointerEvent()
+                                    val zoom = event.calculateZoom()
+                                    targetScale *= zoom
+                                    val offset = event.calculatePan() * 2f
+                                    if (targetScale <= 1) {
+                                        offsetX = 1f
+                                        offsetY = 1f
+                                        targetScale = 1f
+                                        scrollEnabled.value = true
+                                    } else {
+                                        offsetX += offset.x
 
-                                    Log.e(
-                                        "Ramesh offset issue ",
-                                        "screenHeightPx = $screenHeightPx offsetY = $offsetY offset.y = ${offset.y} === ${offset.y + offsetY}"
-                                    )
-                                    Log.e(
-                                        "Ramesh offset issue ",
-                                        "scale = ${((scale.value - 1) * abs(screenHeightPx)) / 2}"
-                                    )
-                                    // screen height = 2212
-                                    // scale factor 4 -> offsety = +/- 3236  (n-3)*h + h = h/2 + h
-                                    // scale factor 3 -> offsety = +/- 2212  (n-3)*h + h = h        = (n-2)h/n -
-                                    // scale factor 2 -> offsety = +/- 1100  (n-3)*h + h = h/2      = (n-1)h/n - 0
+                                        Log.e(
+                                            "Ramesh offset issue ",
+                                            "screenHeightPx = $screenHeightPx offsetY = $offsetY offset.y = ${offset.y} === ${offset.y + offsetY}"
+                                        )
+                                        Log.e(
+                                            "Ramesh offset issue ",
+                                            "scale = ${((scale.value - 1) * abs(screenHeightPx)) / 2}"
+                                        )
+                                        // screen height = 2212
+                                        // scale factor 4 -> offsety = +/- 3236  (n-3)*h + h = h/2 + h
+                                        // scale factor 3 -> offsety = +/- 2212  (n-3)*h + h = h        = (n-2)h/n -
+                                        // scale factor 2 -> offsety = +/- 1100  (n-3)*h + h = h/2      = (n-1)h/n - 0
 
 //                                if (abs(offsetY + offset.y) <= screenHeightPx / 2) {
 //                                if (offsetY + offset.y < screenHeightPx && offsetY + offset.y > -screenHeightPx) {
-                                    if (abs(offsetY + offset.y) <= (
-                                        (scale.value - 1) * abs(
-                                                screenHeightPx
-                                            )
-                                        ) / 2
-                                    ) {
-                                        offsetY += offset.y
-                                    }
+                                        if (abs(offsetY + offset.y) <= (
+                                            (scale.value - 1) * abs(
+                                                    screenHeightPx
+                                                )
+                                            ) / 2
+                                        ) {
+                                            offsetY += offset.y
+                                        }
 //                                if (zoom > 1) {
 //                                    scrollEnabled.value = false
 //                                    rotationState += event.calculateRotation()
 //                                }
-                                    val imageWidth = screenWidthPx * scale.value
+                                        val imageWidth = screenWidthPx * scale.value
 
-                                    val borderReached =
-                                        imageWidth - screenWidthPx - 2 * abs(offsetX)
-                                    scrollEnabled.value = borderReached <= 0
-                                    if (borderReached < 0) {
-                                        offsetX =
-                                            ((imageWidth - screenWidthPx) / 2f).withSign(offsetX)
-                                        if (offset.x != 0f) offsetY -= offset.y
+                                        val borderReached =
+                                            imageWidth - screenWidthPx - 2 * abs(offsetX)
+                                        scrollEnabled.value = borderReached <= 0
+                                        if (borderReached < 0) {
+                                            offsetX =
+                                                ((imageWidth - screenWidthPx) / 2f).withSign(offsetX)
+                                            if (offset.x != 0f) offsetY -= offset.y
+                                        }
                                     }
-                                }
-                                onScale(targetScale, Offset(offsetX, offsetY))
+                                    onScale(targetScale, Offset(offsetX, offsetY))
 
-                                Log.e("Ramesh lazycolumn xy ", "$offsetX $offsetY")
-                            } while (event.changes.any { it.pressed })
+                                    Log.e("Ramesh lazycolumn xy ", "$offsetX $offsetY")
+                                } while (event.changes.any { it.pressed })
+                            }
                         }
                     }
-                }
-        )
+            )
     ) {
-
         Column(
             Modifier.verticalScroll(state = rememberScrollState(offsetY.toInt()))
 //            flingBehavior = FlingBehavior

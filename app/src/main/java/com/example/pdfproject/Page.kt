@@ -105,18 +105,20 @@ fun InputField(
     val modifier: Modifier =
         if (focusRequester != null) Modifier.focusRequester(focusRequester) else Modifier
     var positionInParent by remember {
-    mutableStateOf(Offset(0f,0f))
+        mutableStateOf(Offset(0f, 0f))
     }
     BasicTextField(
         textStyle = TextStyle(fontSize = 10.sp),
-        modifier = modifier.background(Color.White, RectangleShape).border(BorderStroke(1.dp, Color.Blue))
+        modifier = modifier.background(Color.White, RectangleShape)
+            .border(BorderStroke(1.dp, Color.Blue))
             .onFocusChanged {
                 // todo add
                 if (it.isFocused) {
-                    coroutineScope.launch {
-                        bringIntoViewRequester.bringIntoView()
-                    }
-                    onFocus?.invoke("${positionInParent.x} ${positionInParent.y}")
+//                    coroutineScope.launch {
+//                        bringIntoViewRequester.bringIntoView()
+//                    }
+//                    onFocus?.invoke("${positionInParent.x} ${positionInParent.y}")
+                    onFocus?.invoke(field.tag)
                 }
             }
             .defaultMinSize(60.dp, 10.dp)

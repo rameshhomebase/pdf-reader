@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.graphicsLayer
@@ -23,6 +24,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.unit.dp
 import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
 import com.google.accompanist.pager.VerticalPager
 import kotlin.math.abs
 import kotlin.math.withSign
@@ -34,101 +36,112 @@ fun ViewPager(
     minScale: Float = 1f,
     maxScale: Float = 2f,
     scrollEnabled: MutableState<Boolean>,
-    isRotation: Boolean = false
+    isRotation: Boolean = false,
+    focusRequester: FocusRequester
+
 ) {
-
-    var targetScale by remember { mutableStateOf(1f) }
-    val scale = animateFloatAsState(targetValue = maxOf(minScale, minOf(maxScale, targetScale)))
-    var rotationState by remember { mutableStateOf(1f) }
-    var offsetX by remember { mutableStateOf(1f) }
-    var offsetY by remember { mutableStateOf(1f) }
-    val configuration = LocalConfiguration.current
-    val screenWidthPx = with(LocalDensity.current) { configuration.screenWidthDp.dp.toPx() }
-    val screenHeightPx = with(LocalDensity.current) { configuration.screenHeightDp.dp.toPx() }
-    val focusManager = LocalFocusManager.current
-    VerticalPager(
-         modifier= Modifier
-            .wrapContentSize()
-//            .verticalScroll(scrollState)
-            .fillMaxSize(1f)
-            .background(color = Color.Blue)
-            .combinedClickable(
-                interactionSource = remember { MutableInteractionSource() },
-                indication = null,
-                onClick = {
-                    focusManager.clearFocus()
-                },
-                onDoubleClick = {
-                    if (targetScale >= 2f) {
-                        targetScale = 1f
-                        offsetX = 1f
-                        offsetY = 1f
-                        scrollEnabled.value = true
-                    } else targetScale = 2f
-                }
-            )
-            .graphicsLayer {
-                this.scaleX = scale.value
-                this.scaleY = scale.value
-                if (isRotation) {
-                    rotationZ = rotationState
-                }
-                this.translationX = offsetX
-                this.translationY = offsetY
-
-                Log.e("Ramesh lazycolumn size", "${this.size.width} ${this.size.height}")
-            }
-            .pointerInput(Unit) {
-                forEachGesture {
-                    awaitPointerEventScope {
-                        awaitFirstDown()
-                        do {
-                            val event = awaitPointerEvent()
-                            val zoom = event.calculateZoom()
-                            targetScale *= zoom
-                            val offset = event.calculatePan()
-                            if (targetScale <= 1) {
-                                offsetX = 1f
-                                offsetY = 1f
-                                targetScale = 1f
-                                scrollEnabled.value = true
-                            } else {
-                                offsetX += offset.x
-                                // todo change
-                                if (offsetY + offset.y < screenHeightPx && offsetY + offset.y > -screenHeightPx) {
-                                    offsetY += offset.y
-                                }
-                                if (zoom > 1) {
-                                    scrollEnabled.value = false
-                                    rotationState += event.calculateRotation()
-                                }
-                                val imageWidth = screenWidthPx * scale.value
-
-                                val borderReached =
-                                    imageWidth - screenWidthPx - 2 * abs(offsetX)
-                                scrollEnabled.value = borderReached <= 0
-                                if (borderReached < 0) {
-                                    offsetX =
-                                        ((imageWidth - screenWidthPx) / 2f).withSign(offsetX)
-                                    if (offset.x != 0f) offsetY -= offset.y
-                                }
-                            }
-                            Log.e("Ramesh lazycolumn xy ", "$offsetX $offsetY")
-                        } while (event.changes.any { it.pressed })
-                    }
-                }
-            },
+    var isPageScrollEnable by remember {
+        mutableStateOf(false)
+    }
+    HorizontalPager(
+         modifier = Modifier,
         count = list.size,
         contentPadding = PaddingValues(0.dp),
-        flingBehavior = ScrollableDefaults.flingBehavior()
+        userScrollEnabled = isPageScrollEnable
+//        flingBehavior = ScrollableDefaults.flingBehavior()
     ) { page ->
+        var targetScale by remember { mutableStateOf(1f) }
+        val scale = animateFloatAsState(targetValue = maxOf(minScale, minOf(maxScale, targetScale)))
+        var rotationState by remember { mutableStateOf(1f) }
+        var offsetX by remember { mutableStateOf(1f) }
+        var offsetY by remember { mutableStateOf(1f) }
+        val configuration = LocalConfiguration.current
+        val screenWidthPx = with(LocalDensity.current) { configuration.screenWidthDp.dp.toPx() }
+        val screenHeightPx = with(LocalDensity.current) { configuration.screenHeightDp.dp.toPx() }
+        val focusManager = LocalFocusManager.current
         val it = list[page]
         Page(
+            modifier = Modifier
+                .wrapContentSize()
+//            .verticalScroll(scrollState)
+                .fillMaxSize(1f)
+                .background(color = Color.Blue)
+                .combinedClickable(
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = {
+                        focusManager.clearFocus()
+                    },
+                    onDoubleClick = {
+                        if (targetScale >= 2f) {
+                            targetScale = 1f
+                            offsetX = 1f
+                            offsetY = 1f
+                            scrollEnabled.value = true
+//                            isPageScrollEnable = true
+                        } else {
+                            targetScale = 2f
+//                            isPageScrollEnable = false
+                        }
+                    }
+                )
+                .graphicsLayer {
+                    this.scaleX = scale.value
+                    this.scaleY = scale.value
+                    if (isRotation) {
+                        rotationZ = rotationState
+                    }
+                    this.translationX = offsetX
+                    this.translationY = offsetY
+
+                    Log.e("Ramesh lazycolumn size", "${this.size.width} ${this.size.height}")
+                }
+                .pointerInput(Unit) {
+                    forEachGesture {
+                        awaitPointerEventScope {
+                            awaitFirstDown()
+                            do {
+                                val event = awaitPointerEvent()
+                                val zoom = event.calculateZoom()
+                                targetScale *= zoom
+                                val offset = event.calculatePan() * 1.5f
+                                if (targetScale <= 1) {
+                                    offsetX = 1f
+                                    offsetY = 1f
+                                    targetScale = 1f
+                                    scrollEnabled.value = true
+                                } else {
+                                    offsetX += offset.x
+                                    // todo change
+                                    if (offsetY + offset.y < screenHeightPx && offsetY + offset.y > -screenHeightPx) {
+                                        offsetY += offset.y
+                                    }
+                                    if (zoom > 1) {
+                                        scrollEnabled.value = false
+                                        rotationState += event.calculateRotation()
+                                    }
+                                    val imageWidth = screenWidthPx * scale.value
+
+                                    val borderReached =
+                                        imageWidth - screenWidthPx - 2 * abs(offsetX)
+                                    scrollEnabled.value = borderReached <= 0
+                                    if (borderReached < 0) {
+                                        offsetX =
+                                            ((imageWidth - screenWidthPx) / 2f).withSign(offsetX)
+                                        if (offset.x != 0f) offsetY -= offset.y
+                                    }
+                                }
+                                Log.e("Ramesh lazycolumn xy ", "$offsetX $offsetY")
+                            } while (event.changes.any { it.pressed })
+                        }
+                    }
+                },
             pageContent = {
                 PageContent(
                     modifier = Modifier,
                     imagePainter = BitmapPainter(it.first),
-                    fields = it.second
+                    fields = it.second,
+                    focusRequester = focusRequester
                 )
             },
             fields = it.second,
