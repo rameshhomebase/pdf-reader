@@ -211,6 +211,13 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
                     )
                 )
             }
+
+            pagesImage.add(
+                Pair(
+                    ImageBitmap(width, width),
+                    emptyList()
+                )
+            )
             imagesLD = (pagesImage)
 
             Log.v("Ramesh VM", "Total pdf height $pdfHeight")
@@ -364,7 +371,7 @@ class MainViewModel(private val assets: AssetManager, private val resources: Res
     val fieldsMap = mutableMapOf<String, Pair<Int, Int>>()
     var heightRetrieved = 0
     fun heightRetrieved(height: Int) {
-        if(height == heightRetrieved) return
+//        if(height == heightRetrieved) return
         heightRetrieved = height
         heightFactor = if (pdfHeight > height) height.toFloat() / pdfHeight
         else pdfHeight.toFloat() / height

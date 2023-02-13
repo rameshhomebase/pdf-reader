@@ -4,8 +4,10 @@ import android.util.Log
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.defaultMinSize
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -13,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.*
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.painter.Painter
@@ -109,14 +112,19 @@ fun InputField(
     }
     BasicTextField(
         textStyle = TextStyle(fontSize = 10.sp),
-        modifier = modifier.background(Color.White, RectangleShape)
+        modifier = modifier
+            .bringIntoViewRequester(bringIntoViewRequester)
+            .imePadding()
+            .background(Color.White, RectangleShape)
             .border(BorderStroke(1.dp, Color.Blue))
             .onFocusChanged {
+                val circleCoordinates = Rect(500f, 0f, 1000f, 500f)
+
                 // todo add
                 if (it.isFocused) {
-//                    coroutineScope.launch {
-//                        bringIntoViewRequester.bringIntoView()
-//                    }
+                    coroutineScope.launch {
+                        bringIntoViewRequester.bringIntoView(circleCoordinates)
+                    }
 //                    onFocus?.invoke("${positionInParent.x} ${positionInParent.y}")
                     onFocus?.invoke(field.tag)
                 }
@@ -124,18 +132,19 @@ fun InputField(
             .defaultMinSize(60.dp, 10.dp)
             .wrapContentSize()
             .testTag(field.tag)
-            .onGloballyPositioned {
-                positionInParent = it.positionInParent()
-                val positionInRoot = it.positionInRoot()
-                Log.e(
-                    "Ramesh InputField ${field.tag}",
-                    "Global Position positionInParent ${positionInParent.x} ${positionInParent.y}"
-                )
-                Log.e(
-                    "Ramesh InputField ${field.tag}",
-                    "Global Position ${positionInRoot.x} ${positionInRoot.y}"
-                )
-            },
+//            .onGloballyPositioned {
+//                positionInParent = it.positionInParent()
+//                val positionInRoot = it.positionInRoot()
+//                Log.e(
+//                    "Ramesh InputField ${field.tag}",
+//                    "Global Position positionInParent ${positionInParent.x} ${positionInParent.y}"
+//                )
+//                Log.e(
+//                    "Ramesh InputField ${field.tag}",
+//                    "Global Position ${positionInRoot.x} ${positionInRoot.y}"
+//                )
+//            }
+        ,
         value = text,
         singleLine = true,
         onValueChange = {

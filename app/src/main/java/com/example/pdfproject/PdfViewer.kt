@@ -9,6 +9,9 @@ import androidx.compose.foundation.gestures.calculatePan
 import androidx.compose.foundation.gestures.calculateZoom
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.*
@@ -57,10 +60,18 @@ fun PdfViewer(
     }
     var scrollState = rememberScrollState()
     var list = viewModel.imagesLD
+    var lazyState = rememberLazyListState()
+
     LaunchedEffect(key1 = (coOrd).hashCode()) {
         coroutineScope.launch {
+
+            Log.e(tag, "LaunchedEffect ${coOrd.second}")
             scrollState.animateScrollTo(coOrd.second)
+//            offsetY = coOrd.second.toFloat()
+//            offsetX = coOrd.first.toFloat()
+//            scrollState.animateScrollTo(3000)
             // todo change x offset too
+//            lazyState.scrollToItem(1, -700)
         }
     }
 
@@ -68,7 +79,10 @@ fun PdfViewer(
         modifier = Modifier
             .padding(top = 100.dp)
             .background(Color.Green)
-            .then(
+    ) {
+        Column(
+//            state = lazyState,
+            modifier = Modifier.wrapContentSize().then(
                 Modifier
                     .fillMaxSize(1f)
                     .combinedClickable(
@@ -130,10 +144,10 @@ fun PdfViewer(
                                         "scale = ${((scale.value - 1) * abs(screenHeightPx)) / 2}"
                                     )
                                     if (abs(offsetY + offset.y) <= (
-                                        (scale.value - 1) * abs(
+                                            (scale.value - 1) * abs(
                                                 screenHeightPx
                                             )
-                                        ) / 2
+                                            ) / 2
                                     ) {
                                         offsetY += offset.y
                                     }
@@ -155,19 +169,21 @@ fun PdfViewer(
                         }
                     }
             )
-    ) {
-        Column(
-            Modifier.verticalScroll(state = scrollState)
+                .verticalScroll(state = scrollState)
                 .onGloballyPositioned {
-                    if (scrollState.maxValue > 0) {
-                        Log.v(tag, "column size w = ${it.size.width} w = ${it.size.height} ")
-                        viewModel.heightRetrieved(it.size.height)
-                        Log.e(tag, "max scroll ${scrollState.maxValue}")
-                    }
+//                    if (scrollState.maxValue > 0) {
+//                        Log.v(tag, "column size w = ${it.size.width} w = ${it.size.height} ")
+////                        viewModel.heightRetrieved(scrollState.maxValue)
+//                        viewModel.heightRetrieved(it.size.height)
+//                        Log.e(tag, "max scroll ${scrollState.maxValue}")
+//                    }
+
+                    viewModel.heightRetrieved(it.size.height)
+
                 }
         ) {
             list.forEachIndexed { index, it ->
-
+//            itemsIndexed(list) { index, it ->
                 Page(
                     pageContent = {
                         PageContent(
@@ -184,15 +200,42 @@ fun PdfViewer(
             }
         }
     }
-    TextButton(
-        modifier = Modifier
-            .fillMaxWidth()
-            .background(Color.Blue),
-        onClick = {
-            offsetY = 780f
-            offsetX = -181f
-        }
-    ) {
-        Text(text = "Change offset")
-    }
+//    TextButton(
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .background(Color.Blue),
+//        onClick = {
+//            offsetY = 780f
+//            offsetX = -181f
+//        }
+//    ) {
+//        Text(text = "Change offset")
+//    }
 }
+
+
+
+
+//@Composable
+//fun ZoomableImage(image: ImageAsset) {
+//    val (position, setPosition) = +state { IntPxPosition.Origin }
+//
+//    DragGestureDetector(dragObserver = { delta ->
+//        setPosition(position.translateBy(delta))
+//    }) {
+//        Container(width = image.width.dp, height = image.height.dp) {
+//            Clip(modifier = LayoutSize(width = image.width.dp, height = image.height.dp)) {
+//                Image(image, modifier = LayoutSize(width = image.width.dp, height = image.height.dp) +
+//                    position.toPxPosition())
+//            }
+//        }
+//    }
+//}
+//
+//private fun IntPxPosition.translateBy(delta: PxPosition): IntPxPosition {
+//    return IntPxPosition(x + delta.x, y + delta.y)
+//}
+//
+//private fun IntPxPosition.toPxPosition(): PxPosition {
+//    return PxPosition(x.toFloat(), y.toFloat())
+//}
